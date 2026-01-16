@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Math Course Recommender</title>
+  <style>
+    :root{
+      --bg1:#0b1026;
+      --bg2:#1b0b3a;
+      --card: rgba(255,255,255,.10);
+      --card2: rgba(255,255,255,.07);
+      --text:#ffffff;
+      --muted: rgba(255,255,255,.78);
+      --line: rgba(255,255,255,.18);
+
+      --pink:#ff4fd8;
+      --cyan:#33e7ff;
+      --lime:#7dff6b;
+      --sun:#ffd84d;
+      --orange:#ff8a3d;
+      --purple:#8a5bff;
+
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--text);
+      font: 16px/1.25 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(51,231,255,.22), transparent 60%),
+        radial-gradient(1000px 700px at 80% 0%, rgba(255,79,216,.22), transparent 60%),
+        radial-gradient(900px 700px at 60% 100%, rgba(125,255,107,.14), transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px 54px}
+    .top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing:-.02em;
+      line-height:1.05;
+    }
+    .sub{
+      margin:0;
+      font-size: clamp(14px, 1.8vw, 18px);
+      color:var(--muted);
+      max-width: 64ch;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+    }
+    @media (min-width: 940px){
+      .grid{grid-template-columns: 1fr 1fr;}
+    }
+
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(700px 220px at 20% 0%, rgba(255,216,77,.20), transparent 60%),
+                  radial-gradient(700px 240px at 100% 40%, rgba(138,91,255,.18), transparent 60%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .card > *{position:relative}
+
+    .sectionTitle{
+      margin:0 0 12px 0;
+      font-size: 18px;
+      letter-spacing:-.01em;
+      display:flex; align-items:center; gap:10px;
+    }
+    .sectionTitle .icon{
+      width:36px; height:36px; border-radius:12px;
+      display:grid; place-items:center;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    .form{
+      display:grid;
+      gap:14px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 560px){
+      .row{grid-template-columns: 1fr 1fr;}
+    }
+
+    label{
+      display:block;
+      font-weight:900;
+      letter-spacing:.01em;
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: rgba(255,255,255,.92);
+    }
+
+    select, input[type="number"]{
+      width:100%;
+      padding:14px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      outline:none;
+      font-size: 16px;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+    select:focus, input:focus{
+      border-color: rgba(51,231,255,.7);
+      box-shadow: 0 0 0 5px rgba(51,231,255,.18);
+    }
+
+    option {
+      color: #ffffff;
+      background: #0b1026;
+    }
+
+    .actions{
+      display:flex; gap:12px; flex-wrap:wrap;
+      margin-top: 4px;
+    }
+    button{
+      border:0;
+      cursor:pointer;
+      padding:14px 16px;
+      border-radius: 16px;
+      font-weight: 950;
+      font-size: 16px;
+      letter-spacing:.01em;
+      color:#0b1026;
+      box-shadow: 0 14px 30px rgba(0,0,0,.22);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+    }
+    button:active{transform: translateY(1px) scale(.99)}
+    .btnPrimary{
+      background: linear-gradient(90deg, var(--sun), var(--orange), var(--pink));
+      filter: saturate(1.06);
+    }
+    .btnSecondary{
+      background: rgba(255,255,255,.14);
+      color: rgba(255,255,255,.96);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 12px 26px rgba(0,0,0,.18);
+    }
+    .btnPrimary:hover{filter: brightness(1.03) saturate(1.15)}
+    .btnSecondary:hover{filter: brightness(1.05)}
+
+    .resultWrap{ display:grid; gap:12px; }
+    .panel{
+      border-radius: 18px;
+      padding:14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+    }
+
+    .bigRec{
+      display:flex; flex-direction:column; gap:10px;
+      padding:16px;
+      border-radius: 20px;
+      background:
+        radial-gradient(900px 280px at 0% 0%, rgba(51,231,255,.22), transparent 60%),
+        radial-gradient(900px 280px at 100% 100%, rgba(255,79,216,.20), transparent 60%),
+        rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.18);
+      transform: translateY(8px);
+      opacity: 0;
+      animation: popIn .46s cubic-bezier(.2,.9,.2,1) forwards;
+    }
+    @keyframes popIn{ to { transform: translateY(0); opacity:1; } }
+
+    .recLabel{
+      font-weight: 950;
+      letter-spacing:.02em;
+      color: rgba(255,255,255,.85);
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    .recCourse{
+      font-size: clamp(26px, 3.2vw, 34px);
+      font-weight: 1000;
+      letter-spacing:-.02em;
+      line-height:1.05;
+    }
+    .recWhy{ color: rgba(255,255,255,.86); font-weight: 700; }
+
+    .chips{display:flex; gap:10px; flex-wrap:wrap}
+    .chip{
+      padding:10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      font-weight: 900;
+      display:flex; gap:10px; align-items:center;
+    }
+    .chip .mini{width:10px; height:10px; border-radius:999px; display:inline-block}
+    .mini.sun{background:var(--sun)}
+    .mini.lime{background:var(--lime)}
+    .mini.purple{background:var(--purple)}
+
+    .alts{
+      display:grid;
+      gap:10px;
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideIn .52s cubic-bezier(.2,.9,.2,1) .06s forwards;
+    }
+    @keyframes slideIn{ to { transform: translateY(0); opacity:1; } }
+    .altRow{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.14);
+    }
+    .altName{ font-weight: 950; font-size: 16px; }
+    .altTag{
+      font-weight: 950;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.90);
+    }
+
+    .tiny{
+      font-size:12px;
+      color: rgba(255,255,255,.68);
+      margin:0;
+    }
+
+    .fadeSwap{ animation: fadeSwap .25s ease; }
+    @keyframes fadeSwap{
+      from { opacity:.55; transform: translateY(4px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>Math Course Recommender</h1>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="sectionTitle">
+          <div class="icon">🎯</div>
+          <div>Student inputs</div>
+        </div>
+
+        <div class="form">
+          <div class="row">
+            <div>
+              <label for="gradeLevel">Grade Level</label>
+              <select id="gradeLevel">
+                <option value="8">8th</option>
+                <option value="9">9th</option>
+                <option value="10">10th</option>
+                <option value="11">11th</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="stemCareer">STEM Career Goal?</label>
+              <select id="stemCareer">
+                <option value="yes">Yes (STEM)</option>
+                <option value="no">No / Unsure</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="currentClass">Current Math Class</label>
+            <select id="currentClass"></select>
+          </div>
+
+          <div>
+            <label for="classGrade">S1 Class Grade</label>
+            <input id="classGrade" type="number" min="0" max="100" step="1" value="85" />
+          </div>
+
+          <div class="actions">
+            <button class="btnPrimary" id="btnGo">Recommend</button>
+            <button class="btnSecondary" id="btnReset">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="resultCard">
+        <div class="sectionTitle">
+          <div class="icon">✨</div>
+          <div>Recommendation</div>
+        </div>
+
+        <div id="result" class="resultWrap">
+          <p class="tiny">Enter inputs and click <b>Recommend</b>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // 1) COURSE LIST (dropdown)
+    // =========================
+    const COURSES = [
+      "Algebra 1",
+      "PAP Algebra 1",
+      "Algebraic Reasoning",
+      "Geometry",
+      "PAP Geometry",
+      "Algebra 2",
+      "PAP Algebra 2",
+      "PAP Geometry + PAP Algebra 2 (Doubled Up)",
+      "Precalculus",
+      "AP Precalculus",
+      "Statistics",
+      "AP Statistics",
+      "Calculus",
+      "AP Calculus AB",
+      "AP Calculus BC",
+    ];
+
+    // =========================
+    // 2) RULES (min_grade cutoff)
+    // =========================
+    // Rule matches if:
+    // - current_class/stem/grade match (or wildcard "*")
+    // - AND pct >= min_grade (if min_grade provided; wildcard "*" means ignore)
+    const RULES = [
+      // ----- Algebra 1 -----
+      { 
+        current_class: "Algebra 1", 
+        min_grade: 97, stem: "*", 
+        grade: "*", 
+        recommend: "Geometry", 
+        alts: ["PAP Geometry"], 
+        why: "Considering levelling up to PAP Geometry? If the level and quality of your work stays constant, your expected grade in PAP is your current S1 grade minus 20 points (e.g., 100 in Algebra 1 ➡️ 80 in PAP Geometry).",
+        priority: 0 
+      },
+      { 
+        current_class: "Algebra 1",
+        min_grade: 70, stem: "*",
+        grade: "*",
+        recommend: "Geometry",
+        alts: [],
+        why: "Students who do not pass the Algebra I STAAR will be placed in Algebraic Reasoning.", 
+        priority: 0 
+      },
+
+      // ----- PAP Algebra 1 -----
+      { 
+        current_class: "PAP Algebra 1", 
+        min_grade: "70", 
+        stem: "*",
+        grade: "*", 
+        recommend: "Geometry", 
+        alts: [], 
+        why: "On-level courses are recommended for students making below an 85 in PAP.", 
+        priority: 0
+      },
+      { 
+        current_class: "PAP Algebra 1", 
+        min_grade: "85", 
+        stem: "*",
+        grade: "*", 
+        recommend: "PAP Geometry", 
+        alts: ["Geometry"], 
+        why: "", 
+        priority: 0
+      },
+      { 
+        current_class: "PAP Algebra 1", 
+        min_grade: "97", 
+        stem: "*",
+        grade: "*", 
+        recommend: "PAP Geometry + PAP Algebra 2 (Doubled Up)", 
+        alts: ["PAP Geometry"], 
+        why: "", 
+        priority: 0
+      },
+
+      // ----- Algebraic Reasoning -----
+      { 
+        current_class: "Algebraic Reasoning", 
+        min_grade: "*", 
+        stem: "*", 
+        grade: "10", 
+        recommend: "Geometry", 
+        alts: ["Algebra 2"],
+        why: "", 
+        priority: 0 
+      },
+      { 
+        current_class: "Algebraic Reasoning", 
+        min_grade: "*", 
+        stem: "*", 
+        grade: "11", 
+        recommend: "Algebra 2", 
+        alts: ["Geometry"],
+        why: "", 
+        priority: 0 
+      },
+
+
+      // ----- Geometry -----
+      { 
+        current_class: "Geometry", 
+        min_grade: 97, stem: "*", 
+        grade: "*", 
+        recommend: "Algebra 2", 
+        alts: ["PAP Algebra 2"], 
+        why: "Considering levelling up to PAP Algebra 2? If the level and quality of your work stays constant, your expected grade in PAP is your current S1 grade minus 20 points (e.g., 100 in Geometry ➡️ 80 in PAP Algebra 2).",
+        priority: 0 
+      },
+      { 
+        current_class: "Geometry",
+        min_grade: 80, stem: "*",
+        grade: "*",
+        recommend: "Algebra 2",
+        alts: [],
+        why: "", 
+        priority: 0 
+      },
+      { 
+        current_class: "Geometry",
+        min_grade: 70, stem: "*",
+        grade: "*",
+        recommend: "Algebraic Reasoning",
+        alts: ["Algebra 2"],
+        why: "", 
+        priority: 0 
+      },
+
+      // ----- PAP Geometry -----
+      { 
+        current_class: "PAP Geometry", 
+        min_grade: "70", 
+        stem: "*",
+        grade: "*", 
+        recommend: "Algebra 2", 
+        alts: [], 
+        why: "On-level courses are recommended for students making below an 85 in PAP.", 
+        priority: 0
+      },
+      { 
+        current_class: "PAP Geometry", 
+        min_grade: "85", 
+        stem: "*",
+        grade: "*", 
+        recommend: "PAP Algebra 2", 
+        alts: [], 
+        why: "", 
+        priority: 0
+      },
+
+      // ----- Algebra 2 -----
+      { 
+        current_class: "Algebra 2", 
+        min_grade: "80", 
+        stem: "*", 
+        grade: "*", 
+        recommend: "Precalculus", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "If you have not met CCMR requirements, you will be placed in College Prep Math.", 
+        priority: 0 
+      },
+      { 
+        current_class: "Algebra 2", 
+        min_grade: "70", 
+        stem: "*", 
+        grade: "*", 
+        recommend: "Statistics", 
+        alts: ["Statistics"], 
+        why: "If you have not met CCMR requirements, you will be placed in College Prep Math.", 
+        priority: 0 
+      },
+
+      // ----- PAP Algebra 2 -----
+      { 
+        current_class: "PAP Algebra 2", 
+        min_grade: "70", 
+        stem: "*",
+        grade: "*", 
+        recommend: "Precalculus", 
+        alts: [], 
+        why: "On-level courses are recommended for students making below an 85 in PAP.", 
+        priority: 0
+      },
+      { 
+        current_class: "PAP Algebra 2", 
+        min_grade: "85", 
+        stem: "*",
+        grade: "*", 
+        recommend: "AP Precalculus", 
+        alts: [], 
+        why: "", 
+        priority: 0
+      },
+      { 
+        current_class: "PAP Algebra 2", 
+        min_grade: "70", 
+        stem: "*",
+        grade: "11", 
+        recommend: "Dual Credit Math", 
+        alts: [], 
+        why: "Dual-credit Math is a great option for students who will be seniors.", 
+        priority: 0
+      },
+
+      // ----- PAP Geometry + PAP Algebra 2 (Doubled Up) -----
+      { 
+        current_class: "PAP Geometry + PAP Algebra 2 (Doubled Up)", 
+        min_grade: "70", 
+        stem: "*",
+        grade: "*", 
+        recommend: "Precalculus", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "Use your PAP Algebra 2 class grade for an accurate recommendation. On-level courses are recommended for students making below an 85 in PAP.", 
+        priority: 0
+      },
+      { 
+        current_class: "PAP Geometry + PAP Algebra 2 (Doubled Up)", 
+        min_grade: "85", 
+        stem: "*",
+        grade: "*", 
+        recommend: "AP Precalculus", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"],
+        why: "", 
+        priority: 0
+      },
+
+      // ----- Precalculus -----
+      { 
+        current_class: "Precalculus", 
+        min_grade: "*", 
+        stem: "yes",
+        grade: "*", 
+        recommend: "Calculus", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "If you have not met CCMR requirements, you will be placed in College Prep Math.", 
+        priority: 0
+      },
+      { 
+        current_class: "Precalculus", 
+        min_grade: "*", 
+        stem: "no",
+        grade: "*", 
+        recommend: "Dual Credit Math", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "If you have not met CCMR requirements, you will be placed in College Prep Math.", 
+        priority: 0
+      },
+
+      // ----- AP Precalculus -----
+      { 
+        current_class: "AP Precalculus", 
+        min_grade: "95", 
+        stem: "*",
+        grade: "*", 
+        recommend: "AP Calculus BC", 
+        alts: [], 
+        why: "", 
+        priority: 0
+      },
+      { 
+        current_class: "AP Precalculus", 
+        min_grade: "80", 
+        stem: "*", 
+        grade: "*", 
+        recommend: "AP Calculus AB", 
+        alts: [], 
+        why: "", 
+        priority: 0 
+      },
+      { 
+        current_class: "AP Precalculus", 
+        min_grade: "70", 
+        stem: "*", 
+        grade: "*", 
+        recommend: "Calculus", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "", 
+        priority: 0 
+      },
+
+      // ----- Statistics -----
+      { 
+        current_class: "Statistics", 
+        min_grade: "*", 
+        stem: "*", 
+        grade: "*", 
+        recommend: "Dual Credit Math", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "", 
+        priority: 0 
+      },
+
+      // ----- AP Statistics -----
+      { 
+        current_class: "AP Statistics", 
+        min_grade: "70", 
+        stem: "*", 
+        grade: "*", 
+        recommend: "Calculus", 
+        alts: ["DC College Algebra", "DC Finite Math", "DC Statistics"], 
+        why: "", 
+        priority: 0 
+      },
+
+      // ----- Fallback default (VERY important) -----
+      { current_class: "*", min_grade: "*", stem: "*", grade: "*", recommend: "", alts: [""], why: "", priority: 0 }
+    ];
+
+    // =========================
+    // 3) Matching / scoring
+    // =========================
+   function isWildcard(v){ 
+      return v === "*" || v === "" || v == null; 
+    }
+
+    function meetsMinGrade(ruleMin, pct){
+      if (isWildcard(ruleMin)) return true;
+      const m = Number(ruleMin);
+      return Number.isFinite(m) ? pct >= m : true;
+    }
+
+    function matches(rule, ctx){
+      const ok = (rv, cv) => isWildcard(rv) || rv === cv;
+
+      return ok(rule.current_class, ctx.current_class)
+        && ok(rule.stem, ctx.stem)
+        && ok(rule.grade, ctx.grade)
+        && meetsMinGrade(rule.min_grade, ctx.pct);
+    }
+
+    function specificity(rule){
+      // Count non-wildcard fields, including min_grade when it's specified
+      let s = 0;
+      for (const k of ["current_class","stem","grade"]){
+        if (!isWildcard(rule[k])) s++;
+      }
+      if (!isWildcard(rule.min_grade)) s++;
+      return s;
+    }
+
+    function minGradeNum(rule){
+      if (isWildcard(rule.min_grade)) return Number.NEGATIVE_INFINITY;
+      const n = Number(rule.min_grade);
+      return Number.isFinite(n) ? n : Number.NEGATIVE_INFINITY;
+    }
+
+    function pickRule(ctx){
+      const candidates = RULES.filter(r => matches(r, ctx));
+      candidates.sort((a,b) => {
+        const sa = specificity(a), sb = specificity(b);
+        if (sb !== sa) return sb - sa;
+
+        // NEW: highest cutoff wins (95 beats 80)
+        const ma = minGradeNum(a), mb = minGradeNum(b);
+        if (mb !== ma) return mb - ma;
+
+        // final tie-breaker
+        return (b.priority||0) - (a.priority||0);
+      });
+      return candidates[0] || null;
+    }
+
+    // =========================
+    // 4) UI
+    // =========================
+    const els = {
+      gradeLevel: document.getElementById("gradeLevel"),
+      stemCareer: document.getElementById("stemCareer"),
+      currentClass: document.getElementById("currentClass"),
+      classGrade: document.getElementById("classGrade"),
+      btnGo: document.getElementById("btnGo"),
+      btnReset: document.getElementById("btnReset"),
+      result: document.getElementById("result"),
+      resultCard: document.getElementById("resultCard")
+    };
+
+    function populateCourses(){
+      els.currentClass.innerHTML = "";
+      for (const c of COURSES){
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        els.currentClass.appendChild(opt);
+      }
+      els.currentClass.value = "Algebra 1";
+    }
+
+    function tagForStem(stem){
+      return stem === "yes" ? "STEM" : "Non-STEM";
+    }
+
+    function dedupe(arr){
+      return Array.from(new Set((arr||[]).filter(Boolean)));
+    }
+
+    function render(rule, ctx){
+      els.resultCard.classList.remove("fadeSwap");
+      void els.resultCard.offsetWidth;
+      els.resultCard.classList.add("fadeSwap");
+
+      const primary = rule?.recommend || "—";
+      const alts = dedupe(rule?.alts || []).filter(x => x !== primary).slice(0,3);
+      const why = rule?.why || "";
+
+      els.result.innerHTML = `
+        <div class="bigRec">
+          <div class="recLabel">Recommended next course</div>
+          <div class="recCourse">${escapeHtml(primary)}</div>
+          <div class="recWhy">${escapeHtml(why)}</div>
+
+          <div class="chips" style="margin-top:4px;">
+            <div class="chip"><span class="mini sun"></span><span>${escapeHtml(ctx.gradeLabel)}</span></div>
+            <div class="chip"><span class="mini lime"></span><span>${escapeHtml(tagForStem(ctx.stem))}</span></div>
+            <div class="chip"><span class="mini purple"></span><span>Current: ${escapeHtml(ctx.current_class)}</span></div>
+          </div>
+        </div>
+
+        <div class="alts">
+          <div class="panel">
+            <div style="font-weight:1000; font-size:14px; margin-bottom:10px; color: rgba(255,255,255,.92);">
+              Alternatives
+            </div>
+
+            ${
+              alts.length
+                ? alts.map((a,i) => `
+                    <div class="altRow">
+                      <div class="altName">${escapeHtml(a)}</div>
+                    </div>
+                  `).join("")
+                : `<p class="tiny" style="margin:0;">No alternatives listed.</p>`
+            }
+          </div>
+
+          <p class="tiny">
+            Rule matched by <b>${specificity(rule)}</b> fields.
+          </p>
+        </div>
+      `;
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    function recommend(){
+      const pct = Number(els.classGrade.value);
+      if (!Number.isFinite(pct) || pct < 0 || pct > 100){
+        els.result.innerHTML = `<div class="panel"><b>Fix:</b> Class grade must be 0–100.</div>`;
+        return;
+      }
+      
+      const ctx = {
+        grade: els.gradeLevel.value,
+        stem: els.stemCareer.value,
+        current_class: els.currentClass.value,
+        pct,
+        gradeLabel: `S1 Grade: ${pct}`
+      };
+      console.log(ctx)
+      const rule = pickRule(ctx);
+      render(rule, ctx);
+    }
+
+    function reset(){
+      els.gradeLevel.value = "";
+      els.stemCareer.value = "";
+      els.currentClass.value = "";
+      els.classGrade.value = "";
+      els.result.innerHTML = `<p class="tiny">Enter inputs and click <b>Recommend</b>.</p>`;
+    }
+
+    populateCourses();
+    reset();
+
+    els.btnGo.addEventListener("click", recommend);
+    els.btnReset.addEventListener("click", reset);
+
+    // (Optional) wire these to auto-recommend if you want:
+    // ["change","input"].forEach(ev => {
+    //   els.gradeLevel.addEventListener(ev, recommend);
+    //   els.stemCareer.addEventListener(ev, recommend);
+    //   els.currentClass.addEventListener(ev, recommend);
+    //   els.classGrade.addEventListener(ev, recommend);
+    // });
+  </script>
+</body>
+</html>
